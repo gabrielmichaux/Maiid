@@ -1,35 +1,51 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
-import './App.css'
+import { useState } from "react";
 
 function App() {
-  const [count, setCount] = useState(0)
+    const [image, setImage] = useState<File | null>(null);
+    const [preview, setPreview] = useState<string | null>(null);
+    const [result, setResult] = useState<string | null>(null);
 
-  return (
-    <>
-      <div>
-        <a href="https://vite.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
-      </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.tsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
-    </>
-  )
+    const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        if (e.target.files && e.target.files[0]) {
+            const file = e.target.files[0];
+            setImage(file);
+            setPreview(URL.createObjectURL(file)); // Affichage de l’image
+        }
+    };
+
+    const handleUpload = async () => {
+        if (!image) return;
+        const formData = new FormData();
+        formData.append("file", image);
+
+        try {
+            const response = await fetch("http://127.0.0.1:8000/analyse", {
+                method: "POST",
+                body: formData,
+            });
+
+            if (!response.ok) throw new Error("Erreur d'analyse");
+
+            const blob = await response.blob();
+            setResult(URL.createObjectURL(blob));
+        } catch (error) {
+            console.error("Erreur :", error);
+        }
+    };
+
+    return (
+        <div style={{ textAlign: "center", padding: "20px" }}>
+            <h1>Insect Detection App</h1>
+
+            <input type="file" accept="image/*" onChange={handleFileChange} />
+
+            {preview && <img src={preview} alt="Uploaded" style={{ width: "300px", marginTop: "10px" }} />}
+
+            {image && <button onClick={handleUpload}>Analyser</button>}
+
+            {result && <img src={result} alt="Résultat analyse" style={{ width: "300px", marginTop: "20px" }} />}
+        </div>
+    );
 }
 
-export default App
+export default App;
