@@ -1,0 +1,22 @@
+.upload-section {
+    text-align: center;
+    margin-top: 20px;
+  }
+  
+  .upload-info {
+    font-size: 14px;
+    color: #666;
+  }
+  
+  .upload-input {
+    margin: 10px 0;
+  }
+  
+  .uploaded-image {
+    width: 50%;
+    max-width: 400px;
+    height: auto;
+    margin-top: 10px;
+    display: block;
+  }
+  
