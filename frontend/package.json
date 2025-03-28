@@ -7,7 +7,7 @@
 
   "scripts": {
     "start": "vite",
-    "dev": "vite --force --host",
+    "dev": "vite",
     "build": "tsc -b && vite build",
     "lint": "eslint .",
     "preview": "vite preview"
@@ -16,7 +16,8 @@
     "axios": "^1.8.4",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
-    "react-router-dom": "^7.4.0"
+    "react-router-dom": "^7.4.0",
+    "react-scripts" : "5.0.1"
   },
   "devDependencies": {
     "@eslint/js": "^9.21.0",
