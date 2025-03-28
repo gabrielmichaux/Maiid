@@ -8,7 +8,7 @@ const App: React.FC = () => {
   return (
     <div className="App">
       <Header />
-      <div className="main-content-wrapper"> {/* Ajouté un wrapper pour le contenu principal */}
+      <div className="main-content-wrapper">
         <MainContent />
       </div>
       <Footer />

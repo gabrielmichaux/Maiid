@@ -1,43 +1,79 @@
 import React, { useState } from 'react';
+import axios from 'axios';
 import '../assets/MainContent.css';
 
 const MainContent: React.FC = () => {
   const [images, setImages] = useState<File[]>([]);
   const [analysisResults, setAnalysisResults] = useState<{
     fileName: string;
-    genre: string;
-    score: number;
+    detectedImage: string;
+    detections: Array<{
+      className: string;
+      confidence: number;
+    }>;
   }[]>([]);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const uploadedFiles = e.target.files;
-    if (uploadedFiles) {
-      const fileArray = Array.from(uploadedFiles);
-      const limitedFiles = fileArray.slice(0, 50);
-      setImages(limitedFiles);
-      setError(null);
+  // Fonction de gestion du changement de fichier
+  const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const files = event.target.files;
+    if (files && files.length > 0) {
+      setImages(Array.from(files)); // Récupère les fichiers sélectionnés
     }
   };
+  
 
-  const handleAnalyze = () => {
+  // Fonction de traitement de l'analyse des images
+  const handleAnalyze = async () => {
     if (images.length === 0) {
       setError('Veuillez sélectionner au moins une image');
       return;
     }
 
     setIsAnalyzing(true);
-    setTimeout(() => {
-      const mockResults = images.map(file => ({
-        fileName: file.name,
-        genre: file.name.includes('AN') ? 'Aedes' : 'Culex',
-        score: Math.random() * 0.03 + 0.96
-      }));
-      
-      setAnalysisResults(mockResults);
+    setError(null);
+
+    try {
+      const resultsPromises = images.map(async (file) => {
+        const formData = new FormData();
+        formData.append('file', file);
+
+        try {
+          const response = await axios.post('http://localhost:8000/analyse', formData, {
+            headers: {
+              'Content-Type': 'multipart/form-data'
+            }
+          });
+          console.log('Réponse du backend:', response);
+
+          // Les données renvoyées contiendront l'image analysée (en base64) et les détections
+          return {
+            fileName: file.name,
+            detectedImage: `data:image/png;base64,${response.data.image}`, // Image analysée en base64
+            detections: response.data.detections.map((detection: any) => ({
+              className: detection.species, // Nom de l'espèce détectée
+              confidence: detection.confidence // Confiance de la détection
+            }))
+          };
+        } catch (apiError) {
+          console.error('Erreur lors de l\'analyse:', apiError);
+          return {
+            fileName: file.name,
+            detectedImage: '',
+            detections: []
+          };
+        }
+      });
+
+      const results = await Promise.all(resultsPromises);
+      setAnalysisResults(results);
+    } catch (error) {
+      setError('Une erreur est survenue lors de l\'analyse');
+      console.error(error);
+    } finally {
       setIsAnalyzing(false);
-    }, 2000);
+    }
   };
 
   return (
@@ -95,8 +131,23 @@ const MainContent: React.FC = () => {
             {analysisResults.map((result, index) => (
               <div key={index} className="result-item">
                 <p><strong>Nom du fichier :</strong> {result.fileName}</p>
-                <p><strong>Genre détecté :</strong> {result.genre}</p>
-                <p><strong>Score :</strong> {result.score.toFixed(2)}</p>
+                {result.detectedImage && (
+                  <img 
+                    src={result.detectedImage} 
+                    alt="Image analysée" 
+                    className="analyzed-image"
+                  />
+                )}
+                {result.detections.length > 0 && (
+                  <div>
+                    <strong>Détections :</strong>
+                    {result.detections.map((detection, detIndex) => (
+                      <p key={detIndex}>
+                        {detection.className}: {(detection.confidence * 100).toFixed(2)}%
+                      </p>
+                    ))}
+                  </div>
+                )}
               </div>
             ))}
           </div>
